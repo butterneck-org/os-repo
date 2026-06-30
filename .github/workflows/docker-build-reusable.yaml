@@ -189,34 +189,40 @@ jobs:
                 c.body.includes(marker)
             );
 
-            // 2. Extract previous builds (tag + run URL) from the existing comment
+            // 2. Extract previous builds from the existing comment
+            // Marker format: <!-- build:{tag}|{runUrl}|{versionUrl} -->
+            // (versionUrl is optional for backwards compat with older comments)
             let previousBuilds = [];
             if (existingComment) {
-              const buildRegex = /<!-- build:([^|]+)\|([^\s]+) -->/g;
+              const buildRegex = /<!-- build:([^|]+)\|([^|\s]+)(?:\|([^\s]+))? -->/g;
               let match;
               while ((match = buildRegex.exec(existingComment.body)) !== null) {
                 const tag = match[1];
                 const url = match[2];
+                const pkgUrl = match[3] || null;
                 if (tag !== newTag && !previousBuilds.some((b) => b.tag === tag)) {
-                  previousBuilds.push({ tag, url });
+                  previousBuilds.push({ tag, url, pkgUrl });
                 }
               }
             }
 
             // 4. Build the new comment body
-            const formatBuildLine = (tag, url) =>
-              `- \`${tag}\` · [workflow run](${url}) <!-- build:${tag}|${url} -->`;
+            const formatBuildLine = ({ tag, url, pkgUrl }) => {
+              const links = [`[workflow run](${url})`];
+              if (pkgUrl) links.push(`[package](${pkgUrl})`);
+              return `- \`${tag}\` · ${links.join(' · ')} <!-- build:${tag}|${url}|${pkgUrl ?? ''} -->`;
+            };
 
             const previousSection =
               previousBuilds.length > 0
                 ? `<details>\n<summary><b>📦 Previous builds (${previousBuilds.length})</b></summary>\n\n${previousBuilds
-                    .map((b) => formatBuildLine(b.tag, b.url))
+                    .map(formatBuildLine)
                     .join('\n')}\n</details>`
                 : '';
 
             const body = [
               marker,
-              `<!-- build:${newTag}|${runUrl} -->`,
+              `<!-- build:${newTag}|${runUrl}|${versionUrl} -->`,
               `## 🐳 ${imageName}`,
               '',
               `A new Docker image has been built for **\`${imageName}\`** on this PR.`,
