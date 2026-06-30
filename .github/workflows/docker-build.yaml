@@ -11,9 +11,6 @@ on:
       - main
   workflow_dispatch: {}
 
-permissions:
-  contents: write
-
 jobs:
   image-version:
     name: Determine Image Version
@@ -43,6 +40,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      pull-requests: write
 
   build-push-docker-frontend:
     uses: ./.github/workflows/docker-build-reusable.yaml
@@ -55,4 +53,5 @@ jobs:
     permissions:
       contents: read
       packages: write
+      pull-requests: write
 
