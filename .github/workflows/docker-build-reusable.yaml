@@ -222,6 +222,7 @@ jobs:
   cleanup-on-failure:
     permissions:
       contents: read
+      pull-requests: write
     needs:
       - build
       - create-image-manifest
