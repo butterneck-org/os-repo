@@ -10,6 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/butterneck-org/os-repo.git"
   },
+  "type": "module",
   "license": "ISC",
   "author": "",
   "main": "index.js",
