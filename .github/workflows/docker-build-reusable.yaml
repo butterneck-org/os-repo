@@ -88,7 +88,7 @@ jobs:
         with:
           context: ${{ inputs.context }}
           platforms: ${{ matrix.platform.dockerName }}
-          push: true
+          push: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
@@ -100,6 +100,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
 
     needs:
       - build
@@ -133,7 +135,7 @@ jobs:
       pull-requests: write
       packages: read
 
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
 
     needs:
       - build
@@ -271,7 +273,9 @@ jobs:
       always() &&
       inputs.cleanup-on-failure && (
       contains(needs.*.result, 'failure') ||
-      contains(needs.*.result, 'cancelled'))
+      contains(needs.*.result, 'cancelled')) &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
     uses: ./.github/workflows/docker-cleanup.yaml
     with:
       image-name: ${{ inputs.image-name }}
